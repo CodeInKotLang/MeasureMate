@@ -1,6 +1,5 @@
 package com.example.measuremate.presentation.details
 
-import android.service.credentials.CreateEntry
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,7 +55,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.measuremate.domain.model.BodyPart
@@ -70,7 +69,6 @@ import com.example.measuremate.presentation.component.NewValueInputBar
 import com.example.measuremate.presentation.theme.MeasureMateTheme
 import com.example.measuremate.presentation.util.PastOrPresentSelectableDates
 import com.example.measuremate.presentation.util.changeLocalDateToDateString
-import com.example.measuremate.presentation.util.changeLocalDateToGraphDate
 import com.example.measuremate.presentation.util.changeMillisToLocalDate
 import com.example.measuremate.presentation.util.roundToDecimal
 import kotlinx.coroutines.launch
@@ -79,7 +77,10 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
-    windowSizeClass: WindowWidthSizeClass
+    paddingValues: PaddingValues,
+    bodyPartId: String,
+    windowSize: WindowWidthSizeClass,
+    onBackIconClick: () -> Unit
 ) {
 
     var inputValue by remember { mutableStateOf("") }
@@ -132,20 +133,22 @@ fun DetailsScreen(
     )
 
     val dummyBodyPart = BodyPart(
-        name = "Shoulder",
+        name = "Shoulder: $bodyPartId",
         isActive = true,
         measuringUnit = MeasuringUnit.CM.code
     )
 
-    when (windowSizeClass) {
+    when (windowSize) {
         WindowWidthSizeClass.Compact -> {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     DetailsTopBar(
                         bodyPart = dummyBodyPart,
-                        onBackIconClick = {},
+                        onBackIconClick = onBackIconClick,
                         onDeleteIconClick = { isDeleteBodyPartDialogOpen = true },
                         onUnitIconClick = { isMeasuringUnitBottomSheetOpen = true }
                     )
@@ -285,6 +288,7 @@ private fun DetailsTopBar(
 ) {
     TopAppBar(
         modifier = modifier,
+        windowInsets = WindowInsets(0, 0, 0, 0),
         title = {
             Text(
                 text = bodyPart?.name ?: "",
@@ -462,7 +466,10 @@ fun InputCardHideIcon(
 private fun DetailsScreenPrev() {
     MeasureMateTheme {
         DetailsScreen(
-            windowSizeClass = WindowWidthSizeClass.Expanded
+            bodyPartId = "",
+            windowSize = WindowWidthSizeClass.Expanded,
+            onBackIconClick = {},
+            paddingValues = PaddingValues(0.dp)
         )
     }
 }
