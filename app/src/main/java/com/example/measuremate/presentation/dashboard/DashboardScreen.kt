@@ -25,9 +25,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,13 +48,30 @@ import com.example.measuremate.presentation.component.MeasureMateDialog
 import com.example.measuremate.presentation.component.ProfileBottomSheet
 import com.example.measuremate.presentation.component.ProfilePicPlaceholder
 import com.example.measuremate.presentation.theme.MeasureMateTheme
+import com.example.measuremate.presentation.util.UiEvent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun DashboardScreen(
     paddingValues: PaddingValues,
+    snackbarHostState: SnackbarHostState,
+    state: DashboardState,
+    onEvent: (DashboardEvent) -> Unit,
+    uiEvent: Flow<UiEvent>,
     onFabClicked: () -> Unit,
     onItemCardClicked: (String) -> Unit
 ) {
+
+    LaunchedEffect(key1 = Unit) {
+        uiEvent.collect { event ->
+            when(event) {
+                is UiEvent.Snackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+        }
+    }
 
     var isSignOutDialogOpen by rememberSaveable { mutableStateOf(false) }
 
@@ -65,8 +84,8 @@ fun DashboardScreen(
     )
     ProfileBottomSheet(
         isOpen = isProfileBottomSheetOpen,
-        user = null,
-        buttonLoadingState = false,
+        user = user,
+        buttonLoadingState = state.isSignOutButtonLoading,
         buttonPrimaryText = "Sign out with Google",
         onBottomSheetDismiss = { isProfileBottomSheetOpen = false },
         onGoogleButtonClick = { isSignOutDialogOpen = true }
@@ -77,7 +96,10 @@ fun DashboardScreen(
         title = "Sign Out",
         body = { Text(text = "Are you sure, you want to sign Out?") },
         onDialogDismiss = { isSignOutDialogOpen = false },
-        onConfirmButtonClick = { isSignOutDialogOpen = false }
+        onConfirmButtonClick = {
+            onEvent(DashboardEvent.SignOut)
+            isSignOutDialogOpen = false
+        }
     )
 
     Box(
@@ -193,7 +215,11 @@ private fun DashboardScreenPreview() {
         DashboardScreen(
             onItemCardClicked = {},
             onFabClicked = {},
-            paddingValues = PaddingValues(0.dp)
+            state = DashboardState(),
+            onEvent = {},
+            uiEvent = flowOf(),
+            paddingValues = PaddingValues(0.dp),
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }

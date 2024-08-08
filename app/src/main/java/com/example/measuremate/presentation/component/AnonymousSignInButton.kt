@@ -22,6 +22,7 @@ import com.example.measuremate.presentation.theme.MeasureMateTheme
 fun AnonymousSignInButton(
     modifier: Modifier = Modifier,
     loadingState: Boolean = false,
+    enabled: Boolean = true,
     primaryText: String = "Continue without login",
     secondaryText: String = "Please wait...",
     onClick: () -> Unit
@@ -34,6 +35,7 @@ fun AnonymousSignInButton(
 
     TextButton(
         modifier = modifier,
+        enabled = enabled,
         onClick = { onClick() }
     ) {
         Text(text = buttonText)

@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -28,6 +29,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +41,7 @@ import com.example.measuremate.presentation.component.MeasureMateDialog
 
 @Composable
 fun AddItemScreen(
+    snackbarHostState: SnackbarHostState,
     paddingValues: PaddingValues,
     onBackIconClick: () -> Unit
 ) {
@@ -141,6 +144,7 @@ private fun ItemCard(
 private fun AddItemScreenPreview() {
     AddItemScreen(
         onBackIconClick = {},
-        paddingValues = PaddingValues(0.dp)
+        paddingValues = PaddingValues(0.dp),
+        snackbarHostState = remember { SnackbarHostState() }
     )
 }

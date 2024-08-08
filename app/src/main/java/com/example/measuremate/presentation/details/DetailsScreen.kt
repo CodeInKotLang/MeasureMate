@@ -34,6 +34,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
@@ -77,6 +78,7 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
+    snackbarHostState: SnackbarHostState,
     paddingValues: PaddingValues,
     bodyPartId: String,
     windowSize: WindowWidthSizeClass,
@@ -469,7 +471,8 @@ private fun DetailsScreenPrev() {
             bodyPartId = "",
             windowSize = WindowWidthSizeClass.Expanded,
             onBackIconClick = {},
-            paddingValues = PaddingValues(0.dp)
+            paddingValues = PaddingValues(0.dp),
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }
