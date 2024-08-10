@@ -1,11 +1,9 @@
 package com.example.measuremate.data.repository
 
 import android.content.Context
-import android.util.Log
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.example.measuremate.data.util.Constants
-import com.example.measuremate.data.util.Constants.APP_LOG
 import com.example.measuremate.domain.model.AuthStatus
 import com.example.measuremate.domain.repository.AuthRepository
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
@@ -30,7 +28,6 @@ class AuthRepositoryImpl(
             val status = if (auth.currentUser != null) {
                 AuthStatus.AUTHORISED
             } else AuthStatus.UNAUTHORISED
-            Log.d(APP_LOG, "AuthStateListener: authStatus: $status")
             trySend(status)
         }
         firebaseAuth.addAuthStateListener(authStateListener)
@@ -66,6 +63,25 @@ class AuthRepositoryImpl(
                     val authResult = firebaseAuth.signInWithCredential(authCredential).await()
                     val isNewUser = authResult.additionalUserInfo?.isNewUser ?: false
                     Result.success(isNewUser)
+                } else {
+                    Result.failure(IllegalArgumentException("Auth Credential is null"))
+                }
+            } else {
+                Result.failure(authCredentialResult.exceptionOrNull() ?: Exception("Unknown Error"))
+            }
+        }  catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun anonymousUserSignInWithGoogle(context: Context): Result<Boolean> {
+        return try {
+            val authCredentialResult = getGoogleAuthCredentials(context)
+            if (authCredentialResult.isSuccess) {
+                val authCredential = authCredentialResult.getOrNull()
+                if (authCredential != null) {
+                    firebaseAuth.currentUser?.linkWithCredential(authCredential)?.await()
+                    Result.success(value = true)
                 } else {
                     Result.failure(IllegalArgumentException("Auth Credential is null"))
                 }

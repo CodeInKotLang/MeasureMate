@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -15,12 +16,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.example.measuremate.domain.repository.AuthRepository
 import com.example.measuremate.presentation.add_item.AddItemScreen
+import com.example.measuremate.presentation.add_item.AddItemViewModel
 import com.example.measuremate.presentation.dashboard.DashboardScreen
 import com.example.measuremate.presentation.dashboard.DashboardState
 import com.example.measuremate.presentation.dashboard.DashboardViewModel
 import com.example.measuremate.presentation.details.DetailsScreen
+import com.example.measuremate.presentation.details.DetailsViewModel
 import com.example.measuremate.presentation.signin.SignInScreen
 import com.example.measuremate.presentation.signin.SignInViewModel
+import com.example.measuremate.presentation.util.UiEvent
 import kotlin.math.sign
 
 @Composable
@@ -31,6 +35,21 @@ fun NavGraph(
     paddingValues: PaddingValues,
     signInViewModel: SignInViewModel
 ) {
+
+    //using outside the signIn Screen, bcz the sign in func takes time in completing
+    LaunchedEffect(key1 = Unit) {
+        signInViewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Snackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+
+                UiEvent.HideBottomSheet -> {}
+                UiEvent.Navigate -> {}
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Routes.DashboardScreen
@@ -40,20 +59,19 @@ fun NavGraph(
             val state by signInViewModel.state.collectAsStateWithLifecycle()
             SignInScreen(
                 windowSize = windowSize,
-                snackbarHostState = snackbarHostState,
                 paddingValues = paddingValues,
                 state = state,
-                uiEvent = signInViewModel.uiEvent,
                 onEvent = signInViewModel::onEvent
             )
         }
 
         composable<Routes.DashboardScreen> {
             val viewModel: DashboardViewModel = hiltViewModel()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             DashboardScreen(
                 snackbarHostState = snackbarHostState,
                 paddingValues = paddingValues,
-                state = DashboardState(),
+                state = state,
                 onEvent = viewModel::onEvent,
                 uiEvent = viewModel.uiEvent,
                 onFabClicked = { navController.navigate(Routes.AddItemScreen) },
@@ -77,9 +95,14 @@ fun NavGraph(
                 )
             }
         ) {
+            val viewModel: AddItemViewModel = hiltViewModel()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             AddItemScreen(
                 snackbarHostState = snackbarHostState,
                 paddingValues = paddingValues,
+                state = state,
+                uiEvent = viewModel.uiEvent,
+                onEvent = viewModel::onEvent,
                 onBackIconClick = { navController.navigateUp() }
             )
         }
@@ -97,13 +120,16 @@ fun NavGraph(
                     towards = AnimatedContentTransitionScope.SlideDirection.End
                 )
             }
-        ) { navBackStackEntry ->
-            val bodyPartId = navBackStackEntry.toRoute<Routes.DetailsScreen>().bodyPartId
+        ) {
+            val viewModel: DetailsViewModel = hiltViewModel()
+            val state by viewModel.state.collectAsStateWithLifecycle()
             DetailsScreen(
                 snackbarHostState = snackbarHostState,
                 paddingValues = paddingValues,
-                bodyPartId = bodyPartId,
                 windowSize = windowSize,
+                state = state,
+                onEvent = viewModel::onEvent,
+                uiEvent = viewModel.uiEvent,
                 onBackIconClick = { navController.navigateUp() }
             )
         }

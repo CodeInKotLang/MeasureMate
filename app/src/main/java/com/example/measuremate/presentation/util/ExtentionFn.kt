@@ -14,6 +14,12 @@ fun Float.roundToDecimal(decimalPlaces: Int = 1): Float {
     return (this * multiplier).roundToInt() / multiplier.toFloat()
 }
 
+fun String.roundToDecimal(decimalPlaces: Int = 1): Float {
+    val multiplier = 10.0.pow(decimalPlaces)
+    val value = this.toFloatOrNull() ?: 0f
+    return (value * multiplier).roundToInt() / multiplier.toFloat()
+}
+
 fun LocalDate?.changeLocalDateToGraphDate(
     defaultValue: LocalDate = LocalDate.now()
 ): String {

@@ -24,9 +24,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,26 +36,53 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
-import com.example.measuremate.domain.model.predefinedBodyParts
 import com.example.measuremate.presentation.component.MeasureMateDialog
+import com.example.measuremate.presentation.util.UiEvent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 @Composable
 fun AddItemScreen(
     snackbarHostState: SnackbarHostState,
     paddingValues: PaddingValues,
+    state: AddItemState,
+    uiEvent: Flow<UiEvent>,
+    onEvent: (AddItemEvent) -> Unit,
     onBackIconClick: () -> Unit
 ) {
+
+    LaunchedEffect(key1 = Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Snackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+
+                UiEvent.HideBottomSheet -> {}
+                UiEvent.Navigate -> {}
+            }
+        }
+    }
 
     var isAddNewItemDialogOpen by rememberSaveable { mutableStateOf(false) }
     MeasureMateDialog(
         isOpen = isAddNewItemDialogOpen,
-        title = "Add New Item",
+        title = "Add/Update New Item",
         confirmButtonText = "Save",
         body = {
-            OutlinedTextField(value = "", onValueChange = {})
+            OutlinedTextField(
+                value = state.textFieldValue,
+                onValueChange = { onEvent(AddItemEvent.OnTextFieldValueChange(it)) }
+            )
         },
-        onDialogDismiss = { isAddNewItemDialogOpen = false },
-        onConfirmButtonClick = { isAddNewItemDialogOpen = false }
+        onDialogDismiss = {
+            isAddNewItemDialogOpen = false
+            onEvent(AddItemEvent.OnAddItemDialogDismiss)
+        },
+        onConfirmButtonClick = {
+            isAddNewItemDialogOpen = false
+            onEvent(AddItemEvent.UpsertItem)
+        }
     )
 
     Column(
@@ -74,12 +101,15 @@ fun AddItemScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            items(predefinedBodyParts) { bodyPart ->
+            items(state.bodyParts) { bodyPart ->
                 ItemCard(
                     name = bodyPart.name,
                     isChecked = bodyPart.isActive,
-                    onCheckedChange = {},
-                    onClick = {}
+                    onCheckedChange = { onEvent(AddItemEvent.OnItemIsActiveChange(bodyPart)) },
+                    onClick = {
+                        isAddNewItemDialogOpen = true
+                        onEvent(AddItemEvent.OnItemClick(bodyPart))
+                    }
                 )
             }
         }
@@ -145,6 +175,9 @@ private fun AddItemScreenPreview() {
     AddItemScreen(
         onBackIconClick = {},
         paddingValues = PaddingValues(0.dp),
+        state = AddItemState(),
+        uiEvent = flow {},
+        onEvent = {},
         snackbarHostState = remember { SnackbarHostState() }
     )
 }

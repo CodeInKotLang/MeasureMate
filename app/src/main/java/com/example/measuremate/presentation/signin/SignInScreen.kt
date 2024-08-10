@@ -12,14 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,31 +31,16 @@ import com.example.measuremate.presentation.component.AnonymousSignInButton
 import com.example.measuremate.presentation.component.GoogleSignInButton
 import com.example.measuremate.presentation.component.MeasureMateDialog
 import com.example.measuremate.presentation.theme.MeasureMateTheme
-import com.example.measuremate.presentation.util.UiEvent
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun SignInScreen(
     paddingValues: PaddingValues,
-    snackbarHostState: SnackbarHostState,
     windowSize: WindowWidthSizeClass,
     state: SignInState,
-    uiEvent: Flow<UiEvent>,
     onEvent: (SignInEvent) -> Unit
 ) {
 
     val context = LocalContext.current
-
-    LaunchedEffect(key1 = Unit) {
-        uiEvent.collect { event ->
-            when (event) {
-                is UiEvent.Snackbar -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
-            }
-        }
-    }
 
     var isSignInAnonymousDialogOpen by rememberSaveable { mutableStateOf(false) }
     MeasureMateDialog(
@@ -176,9 +158,7 @@ private fun SignInScreenPreview() {
             windowSize = WindowWidthSizeClass.Medium,
             paddingValues = PaddingValues(0.dp),
             state = SignInState(),
-            onEvent = {},
-            snackbarHostState = remember { SnackbarHostState() },
-            uiEvent = flowOf()
+            onEvent = {}
         )
     }
 }
