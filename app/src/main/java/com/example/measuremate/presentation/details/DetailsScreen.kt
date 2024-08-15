@@ -1,6 +1,5 @@
 package com.example.measuremate.presentation.details
 
-import android.service.credentials.CreateEntry
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +34,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,12 +59,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.measuremate.domain.model.BodyPart
 import com.example.measuremate.domain.model.BodyPartValue
-import com.example.measuremate.domain.model.MeasuringUnit
 import com.example.measuremate.domain.model.TimeRange
 import com.example.measuremate.presentation.component.LineGraph
 import com.example.measuremate.presentation.component.MeasureMateDatePicker
@@ -69,20 +71,47 @@ import com.example.measuremate.presentation.component.MeasuringUnitBottomSheet
 import com.example.measuremate.presentation.component.NewValueInputBar
 import com.example.measuremate.presentation.theme.MeasureMateTheme
 import com.example.measuremate.presentation.util.PastOrPresentSelectableDates
+import com.example.measuremate.presentation.util.UiEvent
 import com.example.measuremate.presentation.util.changeLocalDateToDateString
-import com.example.measuremate.presentation.util.changeLocalDateToGraphDate
-import com.example.measuremate.presentation.util.changeMillisToLocalDate
 import com.example.measuremate.presentation.util.roundToDecimal
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsScreen(
-    windowSizeClass: WindowWidthSizeClass
+    snackbarHostState: SnackbarHostState,
+    paddingValues: PaddingValues,
+    windowSize: WindowWidthSizeClass,
+    state: DetailsState,
+    onEvent: (DetailsEvent) -> Unit,
+    uiEvent: Flow<UiEvent>,
+    onBackIconClick: () -> Unit
 ) {
 
-    var inputValue by remember { mutableStateOf("") }
+    LaunchedEffect(key1 = Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Snackbar -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = event.actionLabel,
+                        duration = SnackbarDuration.Short
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        onEvent(DetailsEvent.RestoreBodyPartValue)
+                    }
+                }
+
+                UiEvent.HideBottomSheet -> {}
+                UiEvent.Navigate -> {
+                    onBackIconClick()
+                }
+            }
+        }
+    }
+
     val focusManager = LocalFocusManager.current
     var isInputValueCardVisible by rememberSaveable { mutableStateOf(true) }
 
@@ -93,12 +122,11 @@ fun DetailsScreen(
         isOpen = isMeasuringUnitBottomSheetOpen,
         sheetState = sheetState,
         onBottomSheetDismiss = { isMeasuringUnitBottomSheetOpen = false },
-        onItemClicked = {
+        onItemClicked = { measuringUnit ->
             scope.launch { sheetState.hide() }.invokeOnCompletion {
-                if (!sheetState.isVisible) {
-                    isMeasuringUnitBottomSheetOpen = false
-                }
+                if (!sheetState.isVisible) isMeasuringUnitBottomSheetOpen = false
             }
+            onEvent(DetailsEvent.ChangeMeasuringUnit(measuringUnit))
         }
     )
 
@@ -114,10 +142,11 @@ fun DetailsScreen(
         },
         confirmButtonText = "Delete",
         onDialogDismiss = { isDeleteBodyPartDialogOpen = false },
-        onConfirmButtonClick = { isDeleteBodyPartDialogOpen = false }
+        onConfirmButtonClick = {
+            isDeleteBodyPartDialogOpen = false
+            onEvent(DetailsEvent.DeleteBodyPart)
+        }
     )
-
-    var selectedTimeRange by remember { mutableStateOf(TimeRange.LAST7DAYS) }
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = System.currentTimeMillis(),
@@ -128,24 +157,23 @@ fun DetailsScreen(
         state = datePickerState,
         isOpen = isDatePickerDialogOpen,
         onDismissRequest = { isDatePickerDialogOpen = false },
-        onConfirmButtonClicked = { isDatePickerDialogOpen = false }
+        onConfirmButtonClicked = {
+            isDatePickerDialogOpen = false
+            onEvent(DetailsEvent.OnDateChange(millis = datePickerState.selectedDateMillis))
+        }
     )
 
-    val dummyBodyPart = BodyPart(
-        name = "Shoulder",
-        isActive = true,
-        measuringUnit = MeasuringUnit.CM.code
-    )
-
-    when (windowSizeClass) {
+    when (windowSize) {
         WindowWidthSizeClass.Compact -> {
             Box(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     DetailsTopBar(
-                        bodyPart = dummyBodyPart,
-                        onBackIconClick = {},
+                        bodyPart = state.bodyPart,
+                        onBackIconClick = onBackIconClick,
                         onDeleteIconClick = { isDeleteBodyPartDialogOpen = true },
                         onUnitIconClick = { isMeasuringUnitBottomSheetOpen = true }
                     )
@@ -153,32 +181,34 @@ fun DetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        selectedTimeRange = selectedTimeRange,
-                        onClick = { selectedTimeRange = it }
+                        selectedTimeRange = state.timeRange,
+                        onClick = { onEvent(DetailsEvent.OnTimeRangeChange(it)) }
                     )
                     LineGraph(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(ratio = 2 / 1f)
                             .padding(16.dp),
-                        bodyPartValues = dummyBodyPartValues
+                        bodyPartValues = state.graphBodyPartValues
                     )
                     HistorySection(
-                        bodyPartValues = dummyBodyPartValues,
-                        measuringUnitCode = "cm",
-                        onDeleteIconClick = {}
+                        bodyPartValues = state.allBodyPartValues,
+                        measuringUnitCode = state.bodyPart?.measuringUnit,
+                        onDeleteIconClick = { onEvent(DetailsEvent.DeleteBodyPartValue(it)) }
                     )
                 }
                 NewValueInputBar(
                     modifier = Modifier.align(Alignment.BottomCenter),
                     isInputValueCardVisible = isInputValueCardVisible,
-                    date = datePickerState.selectedDateMillis.changeMillisToLocalDate()
-                        .changeLocalDateToDateString(),
-                    value = inputValue,
-                    onValueChange = { inputValue = it },
-                    onDoneIconClick = {},
+                    date = state.date.changeLocalDateToDateString(),
+                    value = state.textFieldValue,
+                    onValueChange = { onEvent(DetailsEvent.OnTextFieldValueChange(it)) },
                     onDoneImeActionClick = { focusManager.clearFocus() },
-                    onCalendarIconClick = { isDatePickerDialogOpen = true }
+                    onCalendarIconClick = { isDatePickerDialogOpen = true },
+                    onDoneIconClick = {
+                        focusManager.clearFocus()
+                        onEvent(DetailsEvent.AddNewValue)
+                    }
                 )
                 InputCardHideIcon(
                     modifier = Modifier
@@ -192,11 +222,13 @@ fun DetailsScreen(
 
         else -> {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
                 DetailsTopBar(
-                    bodyPart = dummyBodyPart,
-                    onBackIconClick = {},
+                    bodyPart = state.bodyPart,
+                    onBackIconClick = onBackIconClick,
                     onDeleteIconClick = { isDeleteBodyPartDialogOpen = true },
                     onUnitIconClick = { isMeasuringUnitBottomSheetOpen = true }
                 )
@@ -212,15 +244,15 @@ fun DetailsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
-                            selectedTimeRange = selectedTimeRange,
-                            onClick = { selectedTimeRange = it }
+                            selectedTimeRange = state.timeRange,
+                            onClick = { onEvent(DetailsEvent.OnTimeRangeChange(it)) }
                         )
                         LineGraph(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(ratio = 2 / 1f)
                                 .padding(16.dp),
-                            bodyPartValues = dummyBodyPartValues
+                            bodyPartValues = state.graphBodyPartValues
                         )
                     }
                     Box(
@@ -229,20 +261,22 @@ fun DetailsScreen(
                             .weight(1f)
                     ) {
                         HistorySection(
-                            bodyPartValues = dummyBodyPartValues,
-                            measuringUnitCode = "cm",
-                            onDeleteIconClick = {}
+                            bodyPartValues = state.allBodyPartValues,
+                            measuringUnitCode = state.bodyPart?.measuringUnit,
+                            onDeleteIconClick = { onEvent(DetailsEvent.DeleteBodyPartValue(it)) }
                         )
                         NewValueInputBar(
                             modifier = Modifier.align(Alignment.BottomCenter),
                             isInputValueCardVisible = isInputValueCardVisible,
-                            date = datePickerState.selectedDateMillis.changeMillisToLocalDate()
-                                .changeLocalDateToDateString(),
-                            value = inputValue,
-                            onValueChange = { inputValue = it },
-                            onDoneIconClick = {},
+                            date = state.date.changeLocalDateToDateString(),
+                            value = state.textFieldValue,
+                            onValueChange = { onEvent(DetailsEvent.OnTextFieldValueChange(it)) },
                             onDoneImeActionClick = { focusManager.clearFocus() },
-                            onCalendarIconClick = { isDatePickerDialogOpen = true }
+                            onCalendarIconClick = { isDatePickerDialogOpen = true },
+                            onDoneIconClick = {
+                                focusManager.clearFocus()
+                                onEvent(DetailsEvent.AddNewValue)
+                            }
                         )
                         InputCardHideIcon(
                             modifier = Modifier
@@ -256,23 +290,7 @@ fun DetailsScreen(
             }
         }
     }
-
-
 }
-
-val dummyBodyPartValues = listOf(
-    BodyPartValue(value = 72.0f, date = LocalDate.of(2023, 5, 10)),
-    BodyPartValue(value = 76.84865145f, date = LocalDate.of(2023, 5, 1)),
-    BodyPartValue(value = 74.0f, date = LocalDate.of(2023, 4, 20)),
-    BodyPartValue(value = 75.1f, date = LocalDate.of(2023, 4, 5)),
-    BodyPartValue(value = 66.3f, date = LocalDate.of(2023, 3, 15)),
-    BodyPartValue(value = 67.2f, date = LocalDate.of(2023, 3, 10)),
-    BodyPartValue(value = 73.5f, date = LocalDate.of(2023, 3, 1)),
-    BodyPartValue(value = 69.8f, date = LocalDate.of(2023, 2, 18)),
-    BodyPartValue(value = 68.4f, date = LocalDate.of(2023, 2, 1)),
-    BodyPartValue(value = 72.0f, date = LocalDate.of(2023, 1, 22)),
-    BodyPartValue(value = 70.5f, date = LocalDate.of(2023, 1, 14))
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -285,6 +303,7 @@ private fun DetailsTopBar(
 ) {
     TopAppBar(
         modifier = modifier,
+        windowInsets = WindowInsets(0, 0, 0, 0),
         title = {
             Text(
                 text = bodyPart?.name ?: "",
@@ -462,7 +481,13 @@ fun InputCardHideIcon(
 private fun DetailsScreenPrev() {
     MeasureMateTheme {
         DetailsScreen(
-            windowSizeClass = WindowWidthSizeClass.Expanded
+            windowSize = WindowWidthSizeClass.Expanded,
+            onBackIconClick = {},
+            paddingValues = PaddingValues(0.dp),
+            state = DetailsState(),
+            onEvent = {},
+            uiEvent = flow {},
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }

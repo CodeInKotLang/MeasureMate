@@ -26,6 +26,7 @@ import com.example.measuremate.presentation.theme.MeasureMateTheme
 fun GoogleSignInButton(
     modifier: Modifier = Modifier,
     loadingState: Boolean = false,
+    enabled: Boolean = true,
     primaryText: String = "Sign in with Google",
     secondaryText: String = "Please wait...",
     onClick: () -> Unit
@@ -38,6 +39,7 @@ fun GoogleSignInButton(
 
     Button(
         modifier = modifier,
+        enabled = enabled,
         onClick = { onClick() }
     ) {
         Icon(

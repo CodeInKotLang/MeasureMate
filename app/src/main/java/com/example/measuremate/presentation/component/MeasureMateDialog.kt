@@ -30,7 +30,7 @@ fun MeasureMateDialog(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { onConfirmButtonClick() }) {
+                TextButton(onClick = { onDialogDismiss() }) {
                     Text(text = dismissButtonText)
                 }
             }

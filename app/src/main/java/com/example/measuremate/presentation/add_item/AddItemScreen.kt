@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -19,43 +21,78 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
-import com.example.measuremate.domain.model.predefinedBodyParts
 import com.example.measuremate.presentation.component.MeasureMateDialog
+import com.example.measuremate.presentation.util.UiEvent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 @Composable
-fun AddItemScreen() {
+fun AddItemScreen(
+    snackbarHostState: SnackbarHostState,
+    paddingValues: PaddingValues,
+    state: AddItemState,
+    uiEvent: Flow<UiEvent>,
+    onEvent: (AddItemEvent) -> Unit,
+    onBackIconClick: () -> Unit
+) {
+
+    LaunchedEffect(key1 = Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Snackbar -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+
+                UiEvent.HideBottomSheet -> {}
+                UiEvent.Navigate -> {}
+            }
+        }
+    }
 
     var isAddNewItemDialogOpen by rememberSaveable { mutableStateOf(false) }
     MeasureMateDialog(
         isOpen = isAddNewItemDialogOpen,
-        title = "Add New Item",
+        title = "Add/Update New Item",
         confirmButtonText = "Save",
         body = {
-            OutlinedTextField(value = "", onValueChange = {})
+            OutlinedTextField(
+                value = state.textFieldValue,
+                onValueChange = { onEvent(AddItemEvent.OnTextFieldValueChange(it)) }
+            )
         },
-        onDialogDismiss = { isAddNewItemDialogOpen = false },
-        onConfirmButtonClick = { isAddNewItemDialogOpen = false }
+        onDialogDismiss = {
+            isAddNewItemDialogOpen = false
+            onEvent(AddItemEvent.OnAddItemDialogDismiss)
+        },
+        onConfirmButtonClick = {
+            isAddNewItemDialogOpen = false
+            onEvent(AddItemEvent.UpsertItem)
+        }
     )
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
     ) {
         AddItemTopBar(
             onAddIconClick = { isAddNewItemDialogOpen = true },
-            onBackIconClick = {}
+            onBackIconClick = onBackIconClick
         )
         LazyVerticalGrid(
             modifier = Modifier.fillMaxSize(),
@@ -64,12 +101,15 @@ fun AddItemScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            items(predefinedBodyParts) { bodyPart ->
+            items(state.bodyParts) { bodyPart ->
                 ItemCard(
                     name = bodyPart.name,
                     isChecked = bodyPart.isActive,
-                    onCheckedChange = {},
-                    onClick = {}
+                    onCheckedChange = { onEvent(AddItemEvent.OnItemIsActiveChange(bodyPart)) },
+                    onClick = {
+                        isAddNewItemDialogOpen = true
+                        onEvent(AddItemEvent.OnItemClick(bodyPart))
+                    }
                 )
             }
         }
@@ -85,7 +125,8 @@ private fun AddItemTopBar(
 ) {
     TopAppBar(
         modifier = modifier,
-        title = { Text(text = "Add New Item") },
+        windowInsets = WindowInsets(0, 0, 0, 0),
+        title = { Text(text = "Add Item") },
         navigationIcon = {
             IconButton(onClick = { onBackIconClick() }) {
                 Icon(
@@ -131,5 +172,12 @@ private fun ItemCard(
 @PreviewScreenSizes
 @Composable
 private fun AddItemScreenPreview() {
-    AddItemScreen()
+    AddItemScreen(
+        onBackIconClick = {},
+        paddingValues = PaddingValues(0.dp),
+        state = AddItemState(),
+        uiEvent = flow {},
+        onEvent = {},
+        snackbarHostState = remember { SnackbarHostState() }
+    )
 }

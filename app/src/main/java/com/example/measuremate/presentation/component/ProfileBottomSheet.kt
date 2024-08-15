@@ -10,6 +10,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import com.example.measuremate.domain.model.User
 fun ProfileBottomSheet(
     modifier: Modifier = Modifier,
     isOpen: Boolean,
+    sheetState: SheetState,
     user: User?,
     buttonLoadingState: Boolean,
     buttonPrimaryText: String,
@@ -32,6 +34,7 @@ fun ProfileBottomSheet(
     if (isOpen) {
         ModalBottomSheet(
             modifier = modifier,
+            sheetState = sheetState,
             onDismissRequest = { onBottomSheetDismiss() },
             dragHandle = {
                 Column(

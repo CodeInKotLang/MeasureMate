@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "1050005832222",
+    "project_id": "measuremate-5ce00",
+    "storage_bucket": "measuremate-5ce00.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1050005832222:android:41d4a0b42266df9b5da40f",
+        "android_client_info": {
+          "package_name": "com.example.measuremate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzT4xL-JLQI9yJyTUJ3eY3pzIcgUSBT20"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1050005832222-kq3h8845p1gbvo9gl55m5rcg92m10uo8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

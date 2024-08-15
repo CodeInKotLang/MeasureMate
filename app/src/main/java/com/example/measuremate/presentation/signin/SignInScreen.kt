@@ -3,11 +3,13 @@ package com.example.measuremate.presentation.signin
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
@@ -31,8 +34,13 @@ import com.example.measuremate.presentation.theme.MeasureMateTheme
 
 @Composable
 fun SignInScreen(
-    windowSize: WindowWidthSizeClass
+    paddingValues: PaddingValues,
+    windowSize: WindowWidthSizeClass,
+    state: SignInState,
+    onEvent: (SignInEvent) -> Unit
 ) {
+
+    val context = LocalContext.current
 
     var isSignInAnonymousDialogOpen by rememberSaveable { mutableStateOf(false) }
     MeasureMateDialog(
@@ -45,13 +53,18 @@ fun SignInScreen(
             )
         },
         onDialogDismiss = { isSignInAnonymousDialogOpen = false },
-        onConfirmButtonClick = { isSignInAnonymousDialogOpen = false }
+        onConfirmButtonClick = {
+            onEvent(SignInEvent.SignInAnonymously)
+            isSignInAnonymousDialogOpen = false
+        }
     )
 
     when (windowSize) {
         WindowWidthSizeClass.Compact -> {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -71,10 +84,14 @@ fun SignInScreen(
                 )
                 Spacer(modifier = Modifier.fillMaxHeight(fraction = 0.4f))
                 GoogleSignInButton(
-                    onClick = {}
+                    loadingState = state.isGoogleSignInButtonLoading,
+                    enabled = !state.isGoogleSignInButtonLoading && !state.isAnonymousSignInButtonLoading,
+                    onClick = { onEvent(SignInEvent.SignInWithGoogle(context)) }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 AnonymousSignInButton(
+                    loadingState = state.isAnonymousSignInButtonLoading,
+                    enabled = !state.isGoogleSignInButtonLoading && !state.isAnonymousSignInButtonLoading,
                     onClick = { isSignInAnonymousDialogOpen = true }
                 )
             }
@@ -82,7 +99,9 @@ fun SignInScreen(
 
         else -> {
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
             ) {
                 Column(
                     modifier = Modifier
@@ -114,11 +133,15 @@ fun SignInScreen(
                     verticalArrangement = Arrangement.Center
                 ) {
                     GoogleSignInButton(
-                        onClick = {}
+                        loadingState = state.isGoogleSignInButtonLoading,
+                        enabled = !state.isGoogleSignInButtonLoading && !state.isAnonymousSignInButtonLoading,
+                        onClick = { onEvent(SignInEvent.SignInWithGoogle(context)) }
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                     AnonymousSignInButton(
-                        onClick = {}
+                        loadingState = state.isAnonymousSignInButtonLoading,
+                        enabled = !state.isGoogleSignInButtonLoading && !state.isAnonymousSignInButtonLoading,
+                        onClick = { isSignInAnonymousDialogOpen = true }
                     )
                 }
             }
@@ -132,7 +155,10 @@ fun SignInScreen(
 private fun SignInScreenPreview() {
     MeasureMateTheme {
         SignInScreen(
-            windowSize = WindowWidthSizeClass.Medium
+            windowSize = WindowWidthSizeClass.Medium,
+            paddingValues = PaddingValues(0.dp),
+            state = SignInState(),
+            onEvent = {}
         )
     }
 }
