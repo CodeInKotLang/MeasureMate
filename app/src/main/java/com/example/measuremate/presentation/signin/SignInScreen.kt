@@ -3,13 +3,11 @@ package com.example.measuremate.presentation.signin
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +32,6 @@ import com.example.measuremate.presentation.theme.MeasureMateTheme
 
 @Composable
 fun SignInScreen(
-    paddingValues: PaddingValues,
     windowSize: WindowWidthSizeClass,
     state: SignInState,
     onEvent: (SignInEvent) -> Unit
@@ -62,9 +59,7 @@ fun SignInScreen(
     when (windowSize) {
         WindowWidthSizeClass.Compact -> {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -99,9 +94,7 @@ fun SignInScreen(
 
         else -> {
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
             ) {
                 Column(
                     modifier = Modifier
@@ -156,7 +149,6 @@ private fun SignInScreenPreview() {
     MeasureMateTheme {
         SignInScreen(
             windowSize = WindowWidthSizeClass.Medium,
-            paddingValues = PaddingValues(0.dp),
             state = SignInState(),
             onEvent = {}
         )
