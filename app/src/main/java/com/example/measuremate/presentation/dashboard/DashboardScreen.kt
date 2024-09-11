@@ -57,7 +57,6 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    paddingValues: PaddingValues,
     snackbarHostState: SnackbarHostState,
     state: DashboardState,
     onEvent: (DashboardEvent) -> Unit,
@@ -116,9 +115,7 @@ fun DashboardScreen(
     )
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -231,7 +228,6 @@ private fun DashboardScreenPreview() {
             state = DashboardState(),
             onEvent = {},
             uiEvent = flowOf(),
-            paddingValues = PaddingValues(0.dp),
             snackbarHostState = remember { SnackbarHostState() }
         )
     }

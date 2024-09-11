@@ -82,7 +82,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun DetailsScreen(
     snackbarHostState: SnackbarHostState,
-    paddingValues: PaddingValues,
     windowSize: WindowWidthSizeClass,
     state: DetailsState,
     onEvent: (DetailsEvent) -> Unit,
@@ -166,9 +165,7 @@ fun DetailsScreen(
     when (windowSize) {
         WindowWidthSizeClass.Compact -> {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.fillMaxSize()
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     DetailsTopBar(
@@ -222,9 +219,7 @@ fun DetailsScreen(
 
         else -> {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.fillMaxSize()
             ) {
                 DetailsTopBar(
                     bodyPart = state.bodyPart,
@@ -483,7 +478,6 @@ private fun DetailsScreenPrev() {
         DetailsScreen(
             windowSize = WindowWidthSizeClass.Expanded,
             onBackIconClick = {},
-            paddingValues = PaddingValues(0.dp),
             state = DetailsState(),
             onEvent = {},
             uiEvent = flow {},

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -44,7 +43,6 @@ import kotlinx.coroutines.flow.flow
 @Composable
 fun AddItemScreen(
     snackbarHostState: SnackbarHostState,
-    paddingValues: PaddingValues,
     state: AddItemState,
     uiEvent: Flow<UiEvent>,
     onEvent: (AddItemEvent) -> Unit,
@@ -86,9 +84,7 @@ fun AddItemScreen(
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier = Modifier.fillMaxSize()
     ) {
         AddItemTopBar(
             onAddIconClick = { isAddNewItemDialogOpen = true },
@@ -174,7 +170,6 @@ private fun ItemCard(
 private fun AddItemScreenPreview() {
     AddItemScreen(
         onBackIconClick = {},
-        paddingValues = PaddingValues(0.dp),
         state = AddItemState(),
         uiEvent = flow {},
         onEvent = {},
